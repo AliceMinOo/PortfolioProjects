@@ -203,4 +203,27 @@ ORDER BY Continent, Location;
 DROP TABLE IF EXISTS #PercentPopulationVaccinated;
 
 
+-- Creating view for visualization 
+CREATE VIEW PercentPopulationVaccinated AS
+SELECT dea.continent AS continent, dea.location, TRY_CONVERT(DATETIME, dea.date) AS Date,
+    CASE 
+        WHEN ISNUMERIC(dea.population) = 1 THEN CAST(dea.population AS NUMERIC) 
+        ELSE NULL 
+    END AS Population, 
+    
+	CASE 
+        WHEN ISNUMERIC(vac.new_vaccinations) = 1 THEN CAST(vac.new_vaccinations AS NUMERIC) 
+        ELSE NULL 
+    END AS New_Vaccinations,
 
+    SUM(CAST(vac.new_vaccinations AS INT)) OVER (PARTITION BY dea.location ORDER BY dea.location, dea.date) 
+	AS RollingPeopleVaccinated
+FROM PortfolioProject1..CovidDeaths dea 
+JOIN PortfolioProject1..CovidVaccinations vac
+ON 
+dea.location = vac.location 
+AND dea.date = vac.date
+WHERE dea.continent <> '';
+
+Select *
+From PercentPopulationVaccinated 
